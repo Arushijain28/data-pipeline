@@ -1,0 +1,86 @@
+//partitioning, buckting and sorting the dataframe
+
+//saving the table into a hive table in the database created
+
+val dfnew = df.write
+.partitionBy("Date_Occurred")
+.bucketBy(3,"DR_Number")
+.sortBy("Victim_Age")
+.saveAsTable("arushi_db.partion_bucket_sort")
+
+//to find the number of partitions
+
+df.rdd.partitions.size
+df.count
+
+// To save the dataframe into a HDFS path in parquet format
+
+df.write.format("parquet").save("/tmp/spark_assignment_arushi")
+
+//if shows error for accesesing and permissions then make a directory and change permissions in HDFS
+//mkdir /tmp/spark_assignment_arushi (to make a directory)
+//chmod -R 777 /tmp/spark_assignment_arushi (to change the mode of file access : 4-read, 2-write, 1-execute)
+
+//*************************************************************************************************************
+
+//for making another df to read the above HDFS path
+
+val updatedf=spark.read.format("parquet").load("/tmp/spark_assignment_arushi/crimes.parquet")
+
+//to find no. of records in the new df using dataframe API
+
+updatedf.count()
+
+//*******************************************************************************************************************
+
+//to store a datframe as a view
+
+updatedf.createOrReplaceTempView("crimes")
+val df=spark.sql("select * from crimes")
+
+//to count no. of records
+df.count()
+
+//*******************************************************************************************************************
+
+
+//creating an external table in Hive
+
+CREATE EXTERNAL TABLE CRIMES(Name STRING, Crime_ID INT) 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ","
+ STORED AS PARQUET location '/tmp/spark_assignment_arushi'
+
+ //loading data of a file into the table created
+
+ LOAD DATA INPATH '/tmp/spark_assignment_arushi/crimes.parquet' INTO TABLE CRIMES;
+
+ //finding no. of records using sparksql API
+
+ val query = spark.sql(“select count(*) FROM CRIMES”)
+ 
+ /for loading a gzip file into hdfs from local file system
+
+hdfs dfs -copyFromLocal /root/data.gz /tmp/spark_assignment_arushi/
+
+//gunzipping the file through spark scala
+
+val df = spark.read.format("csv").option("header","true").load("/tmp/spark_assignment_arushi/data.gz")
+
+//*******************************************************************************************************
+
+//controlling the no. of files created upon partitioning, bucketing or sorting through repartitioning
+
+newDf.write.partitionBy("Date_Reported").bucketBy(3,"Area_ID").saveAsTable("crimes")
+val repartitionedDf=newDf.repartition(2)
+repartitionedDf.show
+
+//*******************************************************************************************************
+
+//finding size of files
+
+hadoop fs -du -h /tmp/spark_assignment_arushi/
+
+
+
+
+
