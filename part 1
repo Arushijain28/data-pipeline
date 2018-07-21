@@ -1,0 +1,26 @@
+To read a csv file into a dataframe
+ val df = spark.read.format("csv").option("header", "true").load("/tmp/assignmentA/Crime_Data_from_2010_to_Present.csv")
+
+Clean the dataframe (rename the columns and remove special characters)
+To rename the columns:
+val renamed=df.withColumnRenamed("DR Number","DR ID")
+
+To remove special characters from a dataframe:
+val newDf = df.columns.foldLeft(df)((curr, n) => curr.withColumnRenamed(n, n.replaceAll("\\s", "_"))
+
+Save dataframe into a hive table
+First start a hive session
+sudo –i
+beeline
+beeline version, password ,username
+Create database arushi_db;
+Use arushi_db;
+newDf.write.saveAsTable("arushi_db.assignment1")
+show tables;
+SELECT * from assignment1;
+val df=spark.sql("select * from arushi_db.assignment1")
+
+Query the hive table for counting the rows(using sparakSql api)      
+val query=spark.sql("SELECT count(*) FROM arushi_db.assignment1")
+
+
