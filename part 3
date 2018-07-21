@@ -1,0 +1,44 @@
+//reading the data in 2 seperate dataframes
+
+val df1=spark.read.format("csv").option("header","true").load("/tmp/assignmentA/Crime_Data_from_2010_to_Present.csv")
+val df2=spark.read.format("csv").option("header","true").load("/tmp/assignmentA/Crime_Data_from_2010_to_Present.csv")
+
+//adding a new column Rank in each dataframe and assigning a row numberto each row
+
+val newDf1=df1.withColumn("Rank",monotonicallyIncreasingId)
+val newDf2=df2.withColumn("Rank",monotonicallyIncreasingId)
+
+//creating a temp view for each dataframe
+
+val view1=newDf1.createOrReplaceTempView("newview1")
+val view2=newDf2.createOrReplaceTempView("newview2")
+
+
+
+//df_left = df1 left join df2 (using data frame api)  
+df_left=newDf1.join(newDf2,newDf1.col("Rank")===newDf2.col("Rank"),"left")
+
+// df_left_sql = tempview1 left join tempview2 (using  sparkSql api)  
+val df_left_sql=spark.sql("select (*) from newview1 d LEFT JOIN newview2 s ON d.Rank=s.Rank").show
+
+//df_right = df1 right join df2 (using data frame api) 
+val df_right=newDf1.join(newDf2,newDf1.col("Rank")===newDf2.col("Rank"),"right")
+
+//df_right_sql = tempview1 right join tempview2 (using  sparkSql api) 
+val df_right_sql=spark.sql("select (*) from newview1 d RIGHT JOIN newview2 s ON d.Rank=s.Rank").take(5)
+
+//df_inner = df1 inner join df2 (using data frame api)
+val df_inner=newDf1.join(newDf2,newDf1.col("Rank")===newDf2.col("Rank"),"inner")
+
+//df_inner_sql = tempview1 inner join tempview2 (using  sparkSql api)
+val df_inner_sql=spark.sql("select (*) from newview1 d INNER JOIN newview2 s ON d.Rank=s.Rank").take(5)
+
+//df_outer = df1 full outer join df2 (using data frame api)
+val df_outer=newDf1.join(newDf2,newDf1.col("Rank")===newDf2.col("Rank"),"outer")
+
+//df_outer_sql = tempview1 full outer join tempview2 (using  sparkSql api)
+val df_outer_sql=spark.sql("select (*) from newview1 d LEFT OUTER newview2 s ON d.Rank=s.Rank").take(5)   
+
+
+
+
